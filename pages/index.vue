@@ -134,14 +134,14 @@ const requestTypes = computed(() => Object.keys(groupedRequests.value));
     <main class="py-8 px-4 flex flex-col lg:flex-row gap-6">
       <!-- Sidebar -->
       <aside class="w-full lg:w-1/5 bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">Domains</h2>
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Products</h2>
         <div v-if="loading" class="space-y-4">
           <div v-for="i in 3" :key="i" class="flex items-center gap-4 animate-pulse">
             <div class="flex-1 h-4 bg-gray-200 rounded"></div>
           </div>
         </div>
         <div v-else-if="domains.length === 0" class="text-gray-500 text-center py-4">
-          No domains available. Please enter a URL and search.
+          No products available. Please enter a URL and search.
         </div>
         <ul v-else class="space-y-2">
           <li
@@ -295,7 +295,7 @@ const requestTypes = computed(() => Object.keys(groupedRequests.value));
                 </div>
               </div>
               <div v-else class="text-gray-500 text-center py-4">
-                Click a sync button to fetch data for a domain.
+                Click a sync button to fetch data for a product.
               </div>
             </div>
 
