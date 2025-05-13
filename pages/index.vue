@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { ElTable, ElTableColumn, ElMessage } from "element-plus";
 import { ref, computed } from "vue";
+import DomainManagerDialog from "@/component/DomainManagerDialog.vue";
 
 // Set page title
 useHead({
@@ -14,6 +15,7 @@ const domains = ref<string[]>([]);
 const selectedDomain = ref<string | null>(null);
 const syncData = ref<any>(null);
 const syncLoading = ref(false);
+const dialogVisible = ref(false);
 
 // Validate URL format
 const isValidUrl = (urlString: string): boolean => {
@@ -78,7 +80,9 @@ const handleSync = async (domain: string) => {
 
   try {
     const response = await fetch(
-      `https://screenshot.lattex.dev/api/scan-image-links/?url=${encodeURIComponent(domain)}`
+      `https://screenshot.lattex.dev/api/scan-image-links/?url=${encodeURIComponent(
+        domain
+      )}`
     );
 
     if (!response.ok) {
@@ -123,24 +127,39 @@ const requestTypes = computed(() => Object.keys(groupedRequests.value));
   <div class="bg-gray-50 min-h-screen">
     <!-- Header -->
     <header class="bg-white shadow-md">
-      <div class="max-w-7xl mx-auto py-5 px-4 flex items-center justify-between">
+      <div class="mx-auto py-5 px-4 flex items-center justify-between">
         <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">
           URL Data Dashboard
         </h1>
+        <button
+          class="w-full sm:w-auto p-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-md transition-all duration-300 hover:shadow-lg"
+          @click="dialogVisible = true"
+        >
+          Domain Manager
+        </button>
       </div>
     </header>
 
     <!-- Main Content -->
     <main class="py-8 px-4 flex flex-col lg:flex-row gap-6">
       <!-- Sidebar -->
-      <aside class="w-full lg:w-1/5 bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+      <aside
+        class="w-full lg:w-1/5 bg-white rounded-xl shadow-sm border border-gray-200 p-4"
+      >
         <h2 class="text-xl font-semibold text-gray-900 mb-4">Products</h2>
         <div v-if="loading" class="space-y-4">
-          <div v-for="i in 3" :key="i" class="flex items-center gap-4 animate-pulse">
+          <div
+            v-for="i in 3"
+            :key="i"
+            class="flex items-center gap-4 animate-pulse"
+          >
             <div class="flex-1 h-4 bg-gray-200 rounded"></div>
           </div>
         </div>
-        <div v-else-if="domains.length === 0" class="text-gray-500 text-center py-4">
+        <div
+          v-else-if="domains.length === 0"
+          class="text-gray-500 text-center py-4"
+        >
           No products available. Please enter a URL and search.
         </div>
         <ul v-else class="space-y-2">
@@ -160,9 +179,14 @@ const requestTypes = computed(() => Object.keys(groupedRequests.value));
               @click="handleSync(domain)"
               :disabled="syncLoading && selectedDomain === domain"
               class="p-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-md transition-all duration-300"
-              :class="{ 'animate-pulse opacity-75': syncLoading && selectedDomain === domain }"
+              :class="{
+                'animate-pulse opacity-75':
+                  syncLoading && selectedDomain === domain,
+              }"
             >
-              <span v-if="!(syncLoading && selectedDomain === domain)">Sync</span>
+              <span v-if="!(syncLoading && selectedDomain === domain)"
+                >Sync</span
+              >
               <span v-else class="flex items-center gap-2">
                 <svg
                   class="w-4 h-4 animate-spin"
@@ -192,7 +216,9 @@ const requestTypes = computed(() => Object.keys(groupedRequests.value));
       </aside>
 
       <!-- Main Content Area -->
-      <section class="w-full lg:w-4/5 bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+      <section
+        class="w-full lg:w-4/5 bg-white rounded-xl shadow-sm border border-gray-200 p-4"
+      >
         <!-- Input and Search Button -->
         <div class="mb-6 flex flex-col sm:flex-row gap-4">
           <input
@@ -240,7 +266,11 @@ const requestTypes = computed(() => Object.keys(groupedRequests.value));
         <div class="p-4">
           <h2 class="text-xl font-semibold text-gray-900 mb-4">Sync Data</h2>
           <div v-if="syncLoading" class="space-y-4">
-            <div v-for="i in 3" :key="i" class="flex items-center gap-4 animate-pulse">
+            <div
+              v-for="i in 3"
+              :key="i"
+              class="flex items-center gap-4 animate-pulse"
+            >
               <div class="flex-1 h-4 bg-gray-200 rounded"></div>
             </div>
           </div>
@@ -253,21 +283,30 @@ const requestTypes = computed(() => Object.keys(groupedRequests.value));
                   :key="type"
                   class="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm"
                 >
-                  <h3 class="text-lg font-medium text-gray-800 mb-3">{{ type }} Requests</h3>
+                  <h3 class="text-lg font-medium text-gray-800 mb-3">
+                    {{ type }} Requests
+                  </h3>
                   <el-table
                     :data="groupedRequests[type]"
                     class="w-full rounded-lg"
                     :fit="true"
                     :row-class-name="'hover:bg-gray-100 transition-colors duration-200'"
                   >
-                    <el-table-column v-if="type === 'IMAGE'" label="Preview" width="100">
+                    <el-table-column
+                      v-if="type === 'IMAGE'"
+                      label="Preview"
+                      width="100"
+                    >
                       <template #default="{ row }">
                         <a :href="row.url" target="_blank">
                           <img
                             :src="row.url"
                             alt="Image preview"
                             class="w-12 h-12 object-cover rounded-md border border-gray-200"
-                            @error="($event.target as HTMLImageElement).src = 'https://via.placeholder.com/48'"
+                            @error="
+                              ($event.target as HTMLImageElement).src =
+                                'https://via.placeholder.com/48'
+                            "
                           />
                         </a>
                       </template>
@@ -286,8 +325,12 @@ const requestTypes = computed(() => Object.keys(groupedRequests.value));
                     </el-table-column>
                     <el-table-column prop="isValid" label="Valid" width="100">
                       <template #default="{ row }">
-                        <span :class="row.isValid ? 'text-green-600' : 'text-red-600'">
-                          {{ row.isValid ? 'Yes' : 'No' }}
+                        <span
+                          :class="
+                            row.isValid ? 'text-green-600' : 'text-red-600'
+                          "
+                        >
+                          {{ row.isValid ? "Yes" : "No" }}
                         </span>
                       </template>
                     </el-table-column>
@@ -304,14 +347,24 @@ const requestTypes = computed(() => Object.keys(groupedRequests.value));
               <div
                 class="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm"
               >
-                <div v-if="syncData && syncData.invalidLinks && syncData.invalidLinks.length > 0">
+                <div
+                  v-if="
+                    syncData &&
+                    syncData.invalidLinks &&
+                    syncData.invalidLinks.length > 0
+                  "
+                >
                   <el-table
                     :data="syncData.invalidLinks"
                     class="w-full rounded-lg"
                     :fit="true"
                     :row-class-name="'hover:bg-gray-100 transition-colors duration-200'"
                   >
-                    <el-table-column prop="url" label="Invalid Links" min-width="200">
+                    <el-table-column
+                      prop="url"
+                      label="Invalid Links"
+                      min-width="200"
+                    >
                       <template #default="{ row }">
                         <a
                           :href="row"
@@ -333,5 +386,14 @@ const requestTypes = computed(() => Object.keys(groupedRequests.value));
         </div>
       </section>
     </main>
+
+    <!-- Domain Manager Dialog -->
+    <DomainManagerDialog
+      :visible="dialogVisible"
+      title="Domain Manager"
+      width="1500"
+      @update:visible="dialogVisible = $event"
+      @confirm="dialogVisible = false"
+    />
   </div>
 </template>
