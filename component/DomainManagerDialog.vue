@@ -26,13 +26,14 @@ const emit = defineEmits<{
 
 // Reactive state for domain management
 const newDomain = ref("");
-const domains = ref<string[]>([]);
+const domains = ref<Array<{ id: number; domain: string }>>([]);
 const editingIndex = ref<number | null>(null);
 const isLoading = ref(false);
 
 // API endpoints
 const API_URL_LIST = "https://screenshot.lattex.dev/api/scan-image-links/list-domain";
 const API_URL_CREATE = "https://screenshot.lattex.dev/api/scan-image-links/create-domain";
+const API_URL_UPDATE = "https://screenshot.lattex.dev/api/scan-image-links/update-domain";
 
 // Fetch domains from API
 const fetchDomains = async () => {
@@ -40,7 +41,10 @@ const fetchDomains = async () => {
   try {
     const response = await axios.get(API_URL_LIST);
     if (response.data.status === 200) {
-      domains.value = response.data.data.map((item: any) => item.domain);
+      domains.value = response.data.data.map((item: any) => ({
+        id: item.id,
+        domain: item.domain
+      }));
       ElMessage.success("Domains loaded successfully");
     } else {
       ElMessage.error("Failed to load domains");
@@ -76,8 +80,11 @@ const createDomain = async (domain: string) => {
     const response = await axios.post(API_URL_CREATE, { domain });
     if (response.data.status === 200) {
       ElMessage.success("Domain created successfully");
-      // Add the new domain to the list
-      domains.value.push(domain);
+      // Add the new domain to the list with its ID
+      domains.value.push({
+        id: response.data.data.id,
+        domain: response.data.data.domain
+      });
       return true;
     } else {
       ElMessage.error(response.data.message || "Failed to create domain");
@@ -85,6 +92,26 @@ const createDomain = async (domain: string) => {
     }
   } catch (error: any) {
     ElMessage.error("Error creating domain: " + (error.response?.data?.message || error.message));
+    return false;
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// Update domain via API
+const updateDomain = async (domainId: number, newDomainName: string) => {
+  isLoading.value = true;
+  try {
+    const response = await axios.put(`${API_URL_UPDATE}/${domainId}`, { domain: newDomainName });
+    if (response.data.status === 200) {
+      ElMessage.success("Domain updated successfully");
+      return true;
+    } else {
+      ElMessage.error(response.data.message || "Failed to update domain");
+      return false;
+    }
+  } catch (error: any) {
+    ElMessage.error("Error updating domain: " + (error.response?.data?.message || error.message));
     return false;
   } finally {
     isLoading.value = false;
@@ -106,12 +133,19 @@ const handleAddOrUpdateDomain = async () => {
 
   if (editingIndex.value !== null) {
     // Update existing domain
-    domains.value[editingIndex.value] = domain;
-    ElMessage.success("Domain updated successfully");
-    editingIndex.value = null;
+    const domainId = domains.value[editingIndex.value].id;
+    const success = await updateDomain(domainId, domain);
+    
+    if (success) {
+      // Update the domain in the local array
+      domains.value[editingIndex.value].domain = domain;
+      // Reset editing state
+      editingIndex.value = null;
+      newDomain.value = "";
+    }
   } else {
     // Add new domain
-    if (domains.value.includes(domain)) {
+    if (domains.value.some(d => d.domain === domain)) {
       ElMessage.error("Domain already exists");
       return;
     }
@@ -127,7 +161,7 @@ const handleAddOrUpdateDomain = async () => {
 // Handle editing a domain
 const handleEditDomain = (index: number) => {
   editingIndex.value = index;
-  newDomain.value = domains.value[index];
+  newDomain.value = domains.value[index].domain;
 };
 
 // Handle deleting a domain
@@ -215,11 +249,11 @@ const handleCancel = () => {
       <el-table-column prop="domain" label="Domain" min-width="300" align="left">
         <template #default="{ row }">
           <a
-            :href="`http://${row}`"
+            :href="`http://${row.domain}`"
             target="_blank"
             class="text-indigo-600 hover:text-indigo-800 hover:underline font-medium truncate block"
           >
-            {{ row }}
+            {{ row.domain }}
           </a>
         </template>
       </el-table-column>
