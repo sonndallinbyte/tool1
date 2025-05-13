@@ -46,7 +46,6 @@ const fetchDomains = async () => {
         id: item.id,
         domain: item.domain
       }));
-      ElMessage.success("Domains loaded successfully");
     } else {
       ElMessage.error("Failed to load domains");
     }
@@ -219,14 +218,6 @@ const handleDeleteDomain = (index: number) => {
     });
 };
 
-// Handle dialog close with confirmation
-const handleClose = (done: () => void) => {
-  ElMessageBox.confirm("Are you sure to close this dialog?")
-    .then(() => {
-      done();
-    })
-    .catch(() => {});
-};
 
 // Handle confirm action
 const handleConfirm = () => {
@@ -245,7 +236,6 @@ const handleCancel = () => {
     :model-value="props.visible"
     :title="props.title || 'Domain Manager'"
     :width="props.width || '1500px'"
-    :before-close="handleClose"
     @update:model-value="emit('update:visible', $event)"
     class="rounded-lg shadow-xl"
   >
