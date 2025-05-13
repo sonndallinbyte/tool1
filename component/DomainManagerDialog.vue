@@ -34,6 +34,7 @@ const isLoading = ref(false);
 const API_URL_LIST = "https://screenshot.lattex.dev/api/scan-image-links/list-domain";
 const API_URL_CREATE = "https://screenshot.lattex.dev/api/scan-image-links/create-domain";
 const API_URL_UPDATE = "https://screenshot.lattex.dev/api/scan-image-links/update-domain";
+const API_URL_DELETE = "https://screenshot.lattex.dev/api/scan-image-links/delete-domain";
 
 // Fetch domains from API
 const fetchDomains = async () => {
@@ -118,6 +119,26 @@ const updateDomain = async (domainId: number, newDomainName: string) => {
   }
 };
 
+// Delete domain via API
+const deleteDomain = async (domainId: number) => {
+  isLoading.value = true;
+  try {
+    const response = await axios.delete(`${API_URL_DELETE}/${domainId}`);
+    if (response.data.status === 200) {
+      ElMessage.success("Domain deleted successfully");
+      return true;
+    } else {
+      ElMessage.error(response.data.message || "Failed to delete domain");
+      return false;
+    }
+  } catch (error: any) {
+    ElMessage.error("Error deleting domain: " + (error.response?.data?.message || error.message));
+    return false;
+  } finally {
+    isLoading.value = false;
+  }
+};
+
 // Handle adding or updating domain
 const handleAddOrUpdateDomain = async () => {
   const domain = newDomain.value.trim();
@@ -166,8 +187,10 @@ const handleEditDomain = (index: number) => {
 
 // Handle deleting a domain
 const handleDeleteDomain = (index: number) => {
+  const domainToDelete = domains.value[index];
+  
   ElMessageBox.confirm(
-    "Are you sure you want to delete this domain?",
+    `Are you sure you want to delete the domain "${domainToDelete.domain}"?`,
     "Warning",
     {
       confirmButtonText: "OK",
@@ -175,15 +198,25 @@ const handleDeleteDomain = (index: number) => {
       type: "warning",
     }
   )
-    .then(() => {
-      domains.value.splice(index, 1);
-      ElMessage.success("Domain deleted successfully");
-      if (editingIndex.value === index) {
-        editingIndex.value = null;
-        newDomain.value = "";
+    .then(async () => {
+      const success = await deleteDomain(domainToDelete.id);
+      if (success) {
+        // Remove domain from the local array
+        domains.value.splice(index, 1);
+        
+        // Reset editing state if deleting the domain being edited
+        if (editingIndex.value === index) {
+          editingIndex.value = null;
+          newDomain.value = "";
+        } else if (editingIndex.value !== null && editingIndex.value > index) {
+          // Adjust the editing index if we're editing a domain that comes after the deleted one
+          editingIndex.value--;
+        }
       }
     })
-    .catch(() => {});
+    .catch(() => {
+      // User canceled deletion
+    });
 };
 
 // Handle dialog close with confirmation
