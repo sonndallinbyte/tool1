@@ -391,7 +391,7 @@ const requestTypes = computed(() => Object.keys(groupedRequests.value));
     <DomainManagerDialog
       :visible="dialogVisible"
       title="Domain Manager"
-      width="1500"
+      width="1000"
       @update:visible="dialogVisible = $event"
       @confirm="dialogVisible = false"
     />
